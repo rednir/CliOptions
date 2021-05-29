@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Linq;
 using System.Reflection;
 
@@ -6,8 +7,6 @@ namespace CliOptions
 {
     public class Parser<T>
     {
-        private MethodInfo[] OptionMethods { get; }
-
         public Parser()
         {
             OptionMethods = typeof(T)
@@ -16,15 +15,45 @@ namespace CliOptions
                 .ToArray();
         }
 
+        private MethodInfo[] OptionMethods { get; }
+
+        public string HelpText
+        {
+            get
+            {
+                var stringBuilder = new StringBuilder("\nApplication options:\n");
+                foreach (MethodInfo method in OptionMethods)
+                {
+                    var attribute = method.GetCustomAttribute<OptionAttribute>();
+                    stringBuilder
+                        .Append("  ")
+                        .Append(attribute.ShortName == default ? string.Empty : $"-{attribute.ShortName}, ")
+                        .Append("--")
+                        .Append(attribute.LongName)
+                        .Append("\t\t\t")
+                        .AppendLine(attribute.Description);
+                }
+
+                return stringBuilder.ToString();
+            }
+        }
+
         public void Parse(string[] args)
         {
-            foreach (MethodInfo method in OptionMethods)
+            for (int i = 0; i < args.Length; i++)
             {
-                var attribute = (OptionAttribute)method.GetCustomAttribute(typeof(OptionAttribute));
-                if (args[0] == "--" + attribute.LongName || args[0] == "-" + attribute.ShortName)
+                if (!args[i].StartsWith("-"))
+                    throw new UnexpectedValueException($"Unexpected argument '{args[i]}' is not an option.");
+
+                // Try parse argument as method.
+                foreach (MethodInfo method in OptionMethods)
                 {
-                    var action = (Action)Delegate.CreateDelegate(typeof(Action), null, method);
-                    action.Invoke();
+                    var attribute = method.GetCustomAttribute<OptionAttribute>();
+                    if (args[i] == "--" + attribute.LongName || args[i] == "-" + attribute.ShortName)
+                    {
+                        var action = (Action)Delegate.CreateDelegate(typeof(Action), null, method);
+                        action.Invoke();
+                    }
                 }
             }
         }
