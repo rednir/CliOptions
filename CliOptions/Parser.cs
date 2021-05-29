@@ -45,17 +45,31 @@ namespace CliOptions
                 if (!args[i].StartsWith("-"))
                     throw new UnexpectedValueException($"Unexpected argument '{args[i]}' is not an option.");
 
-                // Try parse argument as method.
-                foreach (MethodInfo method in OptionMethods)
+                if (TryParseArgumentAsMethod(args[i]))
                 {
-                    var attribute = method.GetCustomAttribute<OptionAttribute>();
-                    if (args[i] == "--" + attribute.LongName || args[i] == "-" + attribute.ShortName)
-                    {
-                        var action = (Action)Delegate.CreateDelegate(typeof(Action), null, method);
-                        action.Invoke();
-                    }
+                    continue;
+                }
+                else
+                {
+                    throw new UnknownArgumentException(args[i]);
                 }
             }
+        }
+
+        private bool TryParseArgumentAsMethod(string arg)
+        {
+            foreach (MethodInfo method in OptionMethods)
+            {
+                var attribute = method.GetCustomAttribute<OptionAttribute>();
+                if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
+                {
+                    var action = (Action)Delegate.CreateDelegate(typeof(Action), null, method);
+                    action.Invoke();
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

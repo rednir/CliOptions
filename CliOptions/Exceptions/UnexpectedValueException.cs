@@ -8,11 +8,13 @@ namespace CliOptions
         {
         }
 
-        public UnexpectedValueException(string message) : base(message)
+        public UnexpectedValueException(string message)
+            : base(message)
         {
         }
 
-        public UnexpectedValueException(string message, Exception innerException) : base(message, innerException)
+        public UnexpectedValueException(string message, Exception innerException)
+            : base(message, innerException)
         {
         }
     }
