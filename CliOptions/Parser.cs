@@ -10,9 +10,12 @@ namespace CliOptions
 {
     public class Parser
     {
-        public Parser(object obj)
+        public Parser(object obj, ParserSettings parserSettings = null)
         {
             TargetObject = obj;
+
+            if (parserSettings != null)
+                ParserSettings = parserSettings;
 
             OptionMethods = TargetObject.GetType()
                 .GetMethods()
@@ -24,6 +27,8 @@ namespace CliOptions
                 .Where(m => m.GetCustomAttributes(typeof(OptionForPropertyAttribute), false).Length > 0)
                 .ToArray();
         }
+
+        public ParserSettings ParserSettings { get; } = new();
 
         private object TargetObject { get; }
 
