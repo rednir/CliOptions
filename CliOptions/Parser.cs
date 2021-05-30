@@ -29,7 +29,7 @@ namespace CliOptions
         {
             get
             {
-                var stringBuilder = new StringBuilder("\nApplication options:\n");
+                var stringBuilder = new StringBuilder();
                 foreach (OptionAttribute option in OrderedOptionAttributes)
                 {
                     stringBuilder
@@ -37,6 +37,7 @@ namespace CliOptions
                         .Append(option.ShortName == default ? string.Empty : $"-{option.ShortName}, ")
                         .Append("--")
                         .Append(option.LongName)
+                        .Append(option.ValueName == default ? string.Empty : $" [{option.ValueName}]")
                         .Append("\t\t\t")
                         .AppendLine(option.Description);
                 }
@@ -45,13 +46,7 @@ namespace CliOptions
             }
         }
 
-        public ParserSettings ParserSettings { get; } = new();
-
-        private MethodInfo[] MethodOptions { get; }
-
-        private PropertyInfo[] PropertyOptions { get; }
-
-        private OptionAttribute[] OrderedOptionAttributes
+        public OptionAttribute[] OrderedOptionAttributes
         {
             get
             {
@@ -65,6 +60,12 @@ namespace CliOptions
                 return result.OrderBy(o => o.LongName).ToArray();
             }
         }
+
+        public ParserSettings ParserSettings { get; } = new();
+
+        private MethodInfo[] MethodOptions { get; }
+
+        private PropertyInfo[] PropertyOptions { get; }
 
         public void Parse(string[] args)
         {

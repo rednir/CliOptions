@@ -22,16 +22,17 @@ public static class Program
 
 public class MyOptions : Parser
 {
-    // $ ./program --help
-    // $ ./program -h
-    [MethodOption("help", 'h', "Displays all available options.")]
+    [Option("help", 'h', "Displays all available options.")]
     public void Help()
     {
-        Console.WriteLine(this.HelpText);
+        Console.WriteLine("Application options:\n" + this.HelpText);
+
+        // Application options:
+        //     -h, --help                    Displays all available options.
+        //     --print-text [TEXT]           Sets the output
     }
 
-    // $ ./program --print-text "hello world!"
-    [PropertyOption("print-text", description: "Sets the output")]
+    [Option("print-text", description: "Sets the output", valueName: "TEXT")]
     public string PrintText { get; set; } = "No text specified.";
 }
 ```
