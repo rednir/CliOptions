@@ -1,10 +1,11 @@
 using System;
 
-namespace CliOptions.Options
+namespace CliOptions
 {
-    public abstract class Option : Attribute
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false)]
+    public class OptionAttribute : Attribute
     {
-        protected Option(string longName, char shortName, string description)
+        public OptionAttribute(string longName, char shortName, string description)
         {
             LongName = longName;
             ShortName = shortName;

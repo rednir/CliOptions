@@ -4,7 +4,6 @@ using System.Text;
 using System.Linq;
 using System.Reflection;
 using CliOptions.Exceptions;
-using CliOptions.Options;
 
 namespace CliOptions
 {
@@ -17,12 +16,12 @@ namespace CliOptions
 
             ActionOptions = GetType()
                 .GetMethods()
-                .Where(m => m.GetCustomAttributes(typeof(MethodOptionAttribute), false).Length > 0)
+                .Where(m => m.GetCustomAttributes(typeof(OptionAttribute), false).Length > 0)
                 .ToArray();
 
             PropertyOptions = GetType()
                 .GetProperties()
-                .Where(m => m.GetCustomAttributes(typeof(PropertyOptionAttribute), false).Length > 0)
+                .Where(m => m.GetCustomAttributes(typeof(OptionAttribute), false).Length > 0)
                 .ToArray();
         }
 
@@ -33,7 +32,7 @@ namespace CliOptions
                 var stringBuilder = new StringBuilder("\nApplication options:\n");
                 foreach (MethodInfo method in ActionOptions)
                 {
-                    var attribute = method.GetCustomAttribute<MethodOptionAttribute>();
+                    var attribute = method.GetCustomAttribute<OptionAttribute>();
                     stringBuilder
                         .Append("  ")
                         .Append(attribute.ShortName == default ? string.Empty : $"-{attribute.ShortName}, ")
@@ -87,7 +86,7 @@ namespace CliOptions
         {
             foreach (MethodInfo method in ActionOptions)
             {
-                var attribute = method.GetCustomAttribute<MethodOptionAttribute>();
+                var attribute = method.GetCustomAttribute<OptionAttribute>();
                 if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
                 {
                     methodInfo = method;
@@ -103,7 +102,7 @@ namespace CliOptions
         {
             foreach (PropertyInfo property in PropertyOptions)
             {
-                var attribute = property.GetCustomAttribute<PropertyOptionAttribute>();
+                var attribute = property.GetCustomAttribute<OptionAttribute>();
                 if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
                 {
                     property.SetValue(this, value);
