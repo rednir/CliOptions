@@ -1,6 +1,6 @@
 using System;
 
-namespace CliOptions
+namespace CliOptions.Exceptions
 {
     public class UnexpectedValueException : Exception
     {

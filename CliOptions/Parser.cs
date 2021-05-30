@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using System.Reflection;
+using CliOptions.Exceptions;
+using CliOptions.Options;
 
 namespace CliOptions
 {
@@ -12,7 +14,7 @@ namespace CliOptions
         {
             OptionMethods = typeof(T)
                 .GetMethods()
-                .Where(m => m.GetCustomAttributes(typeof(OptionAttribute), false).Length > 0)
+                .Where(m => m.GetCustomAttributes(typeof(OptionForActionAttribute), false).Length > 0)
                 .ToArray();
         }
 
@@ -25,7 +27,7 @@ namespace CliOptions
                 var stringBuilder = new StringBuilder("\nApplication options:\n");
                 foreach (MethodInfo method in OptionMethods)
                 {
-                    var attribute = method.GetCustomAttribute<OptionAttribute>();
+                    var attribute = method.GetCustomAttribute<OptionForActionAttribute>();
                     stringBuilder
                         .Append("  ")
                         .Append(attribute.ShortName == default ? string.Empty : $"-{attribute.ShortName}, ")
@@ -66,7 +68,7 @@ namespace CliOptions
         {
             foreach (MethodInfo method in OptionMethods)
             {
-                var attribute = method.GetCustomAttribute<OptionAttribute>();
+                var attribute = method.GetCustomAttribute<OptionForActionAttribute>();
                 if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
                 {
                     action = (Action)Delegate.CreateDelegate(typeof(Action), null, method);
