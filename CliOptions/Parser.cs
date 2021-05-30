@@ -10,19 +10,17 @@ namespace CliOptions
 {
     public class Parser
     {
-        public Parser(object obj, ParserSettings parserSettings = null)
+        public Parser(ParserSettings parserSettings = null)
         {
-            TargetObject = obj;
-
             if (parserSettings != null)
                 ParserSettings = parserSettings;
 
-            ActionOptions = TargetObject.GetType()
+            ActionOptions = GetType()
                 .GetMethods()
-                .Where(m => m.GetCustomAttributes(typeof(ActionOptionAttribute), false).Length > 0)
+                .Where(m => m.GetCustomAttributes(typeof(MethodOptionAttribute), false).Length > 0)
                 .ToArray();
 
-            PropertyOptions = TargetObject.GetType()
+            PropertyOptions = GetType()
                 .GetProperties()
                 .Where(m => m.GetCustomAttributes(typeof(PropertyOptionAttribute), false).Length > 0)
                 .ToArray();
@@ -35,7 +33,7 @@ namespace CliOptions
                 var stringBuilder = new StringBuilder("\nApplication options:\n");
                 foreach (MethodInfo method in ActionOptions)
                 {
-                    var attribute = method.GetCustomAttribute<ActionOptionAttribute>();
+                    var attribute = method.GetCustomAttribute<MethodOptionAttribute>();
                     stringBuilder
                         .Append("  ")
                         .Append(attribute.ShortName == default ? string.Empty : $"-{attribute.ShortName}, ")
@@ -51,25 +49,23 @@ namespace CliOptions
 
         public ParserSettings ParserSettings { get; } = new();
 
-        private object TargetObject { get; }
-
         private MethodInfo[] ActionOptions { get; }
 
         private PropertyInfo[] PropertyOptions { get; }
 
         public void Parse(string[] args)
         {
-            List<Action> actionsToInvoke = new();
+            List<MethodInfo> methodsToInvoke = new();
 
             for (int i = 0; i < args.Length; i++)
             {
                 if (!args[i].StartsWith("-"))
                     throw new UnexpectedValueException($"Unexpected argument '{args[i]}' is not an option.");
 
-                if (TryParseArgumentAsActionOption(args[i], out Action action))
+                if (TryParseArgumentAsMethodOption(args[i], out MethodInfo action))
                 {
                     // Actions will be invoked at the end of this method.
-                    actionsToInvoke.Add(action);
+                    methodsToInvoke.Add(action);
                 }
                 else if (i + 1 < args.Length && TryParseArgumentAsPropertyOption(args[i], args[i + 1]))
                 {
@@ -83,23 +79,23 @@ namespace CliOptions
                 }
             }
 
-            foreach (var action in actionsToInvoke)
-                action.Invoke();
+            foreach (MethodInfo method in methodsToInvoke)
+                method.Invoke(this, null);
         }
 
-        private bool TryParseArgumentAsActionOption(string arg, out Action action)
+        private bool TryParseArgumentAsMethodOption(string arg, out MethodInfo methodInfo)
         {
             foreach (MethodInfo method in ActionOptions)
             {
-                var attribute = method.GetCustomAttribute<ActionOptionAttribute>();
+                var attribute = method.GetCustomAttribute<MethodOptionAttribute>();
                 if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
                 {
-                    action = (Action)Delegate.CreateDelegate(typeof(Action), null, method);
+                    methodInfo = method;
                     return true;
                 }
             }
 
-            action = default;
+            methodInfo = default;
             return false;
         }
 
@@ -110,7 +106,7 @@ namespace CliOptions
                 var attribute = property.GetCustomAttribute<PropertyOptionAttribute>();
                 if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
                 {
-                    property.SetValue(TargetObject, value);
+                    property.SetValue(this, value);
                     return true;
                 }
             }
