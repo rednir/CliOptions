@@ -8,17 +8,28 @@ using CliOptions.Options;
 
 namespace CliOptions
 {
-    public class Parser<T>
+    public class Parser
     {
-        public Parser()
+        public Parser(object obj)
         {
-            OptionMethods = typeof(T)
+            TargetObject = obj;
+
+            OptionMethods = TargetObject.GetType()
                 .GetMethods()
                 .Where(m => m.GetCustomAttributes(typeof(OptionForActionAttribute), false).Length > 0)
                 .ToArray();
+
+            OptionProperties = TargetObject.GetType()
+                .GetProperties()
+                .Where(m => m.GetCustomAttributes(typeof(OptionForPropertyAttribute), false).Length > 0)
+                .ToArray();
         }
 
+        private object TargetObject { get; }
+
         private MethodInfo[] OptionMethods { get; }
+
+        private PropertyInfo[] OptionProperties { get; }
 
         public string HelpText
         {
@@ -50,9 +61,16 @@ namespace CliOptions
                 if (!args[i].StartsWith("-"))
                     throw new UnexpectedValueException($"Unexpected argument '{args[i]}' is not an option.");
 
-                if (TryParseArgumentAsAction(args[i], out Action action))
+                if (TryParseArgumentForAction(args[i], out Action action))
                 {
+                    // Actions will be invoked at the end of this method.
                     actionsToInvoke.Add(action);
+                }
+                else if (i + 1 < args.Length && TryParseArgumentForProperty(args[i], args[i + 1]))
+                {
+                    // Skip the next argument as we know this the
+                    // value for the one we just parsed.
+                    i++;
                 }
                 else
                 {
@@ -64,7 +82,7 @@ namespace CliOptions
                 action.Invoke();
         }
 
-        private bool TryParseArgumentAsAction(string arg, out Action action)
+        private bool TryParseArgumentForAction(string arg, out Action action)
         {
             foreach (MethodInfo method in OptionMethods)
             {
@@ -77,6 +95,21 @@ namespace CliOptions
             }
 
             action = default;
+            return false;
+        }
+
+        private bool TryParseArgumentForProperty(string arg, string value)
+        {
+            foreach (PropertyInfo property in OptionProperties)
+            {
+                var attribute = property.GetCustomAttribute<OptionForPropertyAttribute>();
+                if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
+                {
+                    property.SetValue(TargetObject, value);
+                    return true;
+                }
+            }
+
             return false;
         }
     }
