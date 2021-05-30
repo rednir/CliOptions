@@ -17,33 +17,25 @@ namespace CliOptions
             if (parserSettings != null)
                 ParserSettings = parserSettings;
 
-            OptionMethods = TargetObject.GetType()
+            ActionOptions = TargetObject.GetType()
                 .GetMethods()
-                .Where(m => m.GetCustomAttributes(typeof(OptionForActionAttribute), false).Length > 0)
+                .Where(m => m.GetCustomAttributes(typeof(ActionOptionAttribute), false).Length > 0)
                 .ToArray();
 
-            OptionProperties = TargetObject.GetType()
+            PropertyOptions = TargetObject.GetType()
                 .GetProperties()
-                .Where(m => m.GetCustomAttributes(typeof(OptionForPropertyAttribute), false).Length > 0)
+                .Where(m => m.GetCustomAttributes(typeof(PropertyOptionAttribute), false).Length > 0)
                 .ToArray();
         }
-
-        public ParserSettings ParserSettings { get; } = new();
-
-        private object TargetObject { get; }
-
-        private MethodInfo[] OptionMethods { get; }
-
-        private PropertyInfo[] OptionProperties { get; }
 
         public string HelpText
         {
             get
             {
                 var stringBuilder = new StringBuilder("\nApplication options:\n");
-                foreach (MethodInfo method in OptionMethods)
+                foreach (MethodInfo method in ActionOptions)
                 {
-                    var attribute = method.GetCustomAttribute<OptionForActionAttribute>();
+                    var attribute = method.GetCustomAttribute<ActionOptionAttribute>();
                     stringBuilder
                         .Append("  ")
                         .Append(attribute.ShortName == default ? string.Empty : $"-{attribute.ShortName}, ")
@@ -57,6 +49,14 @@ namespace CliOptions
             }
         }
 
+        public ParserSettings ParserSettings { get; } = new();
+
+        private object TargetObject { get; }
+
+        private MethodInfo[] ActionOptions { get; }
+
+        private PropertyInfo[] PropertyOptions { get; }
+
         public void Parse(string[] args)
         {
             List<Action> actionsToInvoke = new();
@@ -66,12 +66,12 @@ namespace CliOptions
                 if (!args[i].StartsWith("-"))
                     throw new UnexpectedValueException($"Unexpected argument '{args[i]}' is not an option.");
 
-                if (TryParseArgumentForAction(args[i], out Action action))
+                if (TryParseArgumentAsActionOption(args[i], out Action action))
                 {
                     // Actions will be invoked at the end of this method.
                     actionsToInvoke.Add(action);
                 }
-                else if (i + 1 < args.Length && TryParseArgumentForProperty(args[i], args[i + 1]))
+                else if (i + 1 < args.Length && TryParseArgumentAsPropertyOption(args[i], args[i + 1]))
                 {
                     // Skip the next argument as we know this the
                     // value for the one we just parsed.
@@ -87,11 +87,11 @@ namespace CliOptions
                 action.Invoke();
         }
 
-        private bool TryParseArgumentForAction(string arg, out Action action)
+        private bool TryParseArgumentAsActionOption(string arg, out Action action)
         {
-            foreach (MethodInfo method in OptionMethods)
+            foreach (MethodInfo method in ActionOptions)
             {
-                var attribute = method.GetCustomAttribute<OptionForActionAttribute>();
+                var attribute = method.GetCustomAttribute<ActionOptionAttribute>();
                 if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
                 {
                     action = (Action)Delegate.CreateDelegate(typeof(Action), null, method);
@@ -103,11 +103,11 @@ namespace CliOptions
             return false;
         }
 
-        private bool TryParseArgumentForProperty(string arg, string value)
+        private bool TryParseArgumentAsPropertyOption(string arg, string value)
         {
-            foreach (PropertyInfo property in OptionProperties)
+            foreach (PropertyInfo property in PropertyOptions)
             {
-                var attribute = property.GetCustomAttribute<OptionForPropertyAttribute>();
+                var attribute = property.GetCustomAttribute<PropertyOptionAttribute>();
                 if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
                 {
                     property.SetValue(TargetObject, value);
