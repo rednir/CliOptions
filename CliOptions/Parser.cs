@@ -68,8 +68,8 @@ namespace CliOptions
                 }
                 else if (i + 1 < args.Length && TryParseArgumentAsPropertyOption(args[i], args[i + 1]))
                 {
-                    // Skip the next argument as we know this the
-                    // value for the one we just parsed.
+                    // Skip the next argument as we know it's the
+                    // value for the option we just parsed.
                     i++;
                 }
                 else
