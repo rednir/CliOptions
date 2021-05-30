@@ -5,7 +5,7 @@ namespace CliOptions
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false)]
     public class OptionAttribute : Attribute
     {
-        public OptionAttribute(string longName, char shortName, string description)
+        public OptionAttribute(string longName, char shortName = default, string description = default)
         {
             LongName = longName;
             ShortName = shortName;

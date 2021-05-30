@@ -14,7 +14,7 @@ namespace CliOptions
             if (parserSettings != null)
                 ParserSettings = parserSettings;
 
-            ActionOptions = GetType()
+            MethodOptions = GetType()
                 .GetMethods()
                 .Where(m => m.GetCustomAttributes(typeof(OptionAttribute), false).Length > 0)
                 .ToArray();
@@ -30,16 +30,15 @@ namespace CliOptions
             get
             {
                 var stringBuilder = new StringBuilder("\nApplication options:\n");
-                foreach (MethodInfo method in ActionOptions)
+                foreach (OptionAttribute option in OrderedOptionAttributes)
                 {
-                    var attribute = method.GetCustomAttribute<OptionAttribute>();
                     stringBuilder
                         .Append("  ")
-                        .Append(attribute.ShortName == default ? string.Empty : $"-{attribute.ShortName}, ")
+                        .Append(option.ShortName == default ? string.Empty : $"-{option.ShortName}, ")
                         .Append("--")
-                        .Append(attribute.LongName)
+                        .Append(option.LongName)
                         .Append("\t\t\t")
-                        .AppendLine(attribute.Description);
+                        .AppendLine(option.Description);
                 }
 
                 return stringBuilder.ToString();
@@ -48,9 +47,24 @@ namespace CliOptions
 
         public ParserSettings ParserSettings { get; } = new();
 
-        private MethodInfo[] ActionOptions { get; }
+        private MethodInfo[] MethodOptions { get; }
 
         private PropertyInfo[] PropertyOptions { get; }
+
+        private OptionAttribute[] OrderedOptionAttributes
+        {
+            get
+            {
+                List<OptionAttribute> result = new();
+
+                foreach (MethodInfo method in MethodOptions)
+                    result.Add(method.GetCustomAttribute<OptionAttribute>());
+                foreach (PropertyInfo property in PropertyOptions)
+                    result.Add(property.GetCustomAttribute<OptionAttribute>());
+
+                return result.OrderBy(o => o.LongName).ToArray();
+            }
+        }
 
         public void Parse(string[] args)
         {
@@ -84,7 +98,7 @@ namespace CliOptions
 
         private bool TryParseArgumentAsMethodOption(string arg, out MethodInfo methodInfo)
         {
-            foreach (MethodInfo method in ActionOptions)
+            foreach (MethodInfo method in MethodOptions)
             {
                 var attribute = method.GetCustomAttribute<OptionAttribute>();
                 if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
