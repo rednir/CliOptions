@@ -16,12 +16,12 @@ namespace CliOptions
 
             MethodOptions = GetType()
                 .GetMethods()
-                .Where(m => m.GetCustomAttributes(typeof(OptionAttribute), false).Length > 0)
+                .Where(m => m.GetCustomAttributes(typeof(MethodOptionAttribute), false).Length > 0)
                 .ToArray();
 
             PropertyOptions = GetType()
                 .GetProperties()
-                .Where(m => m.GetCustomAttributes(typeof(OptionAttribute), false).Length > 0)
+                .Where(m => m.GetCustomAttributes(typeof(PropertyOptionAttribute), false).Length > 0)
                 .ToArray();
         }
 
@@ -29,24 +29,29 @@ namespace CliOptions
         {
             get
             {
-                var stringBuilder = new StringBuilder();
-                foreach (OptionAttribute option in OrderedOptionAttributes)
+                StringBuilder stringBuilder = new();
+
+                foreach (MethodInfo method in MethodOptions)
                 {
-                    stringBuilder
-                        .Append("  ")
-                        .Append(option.ShortName == default ? string.Empty : $"-{option.ShortName}, ")
-                        .Append("--")
-                        .Append(option.LongName)
-                        .Append(option.ValueName == default ? string.Empty : $" [{option.ValueName}]")
-                        .Append("\t\t\t")
-                        .AppendLine(option.Description);
+                    stringBuilder.Append(
+                        MakeStringForOption(
+                            option: method.GetCustomAttribute<MethodOptionAttribute>(),
+                            parameterTypes: method.GetParameters().Select(p => p.ParameterType).ToArray()));
+                }
+
+                foreach (PropertyInfo property in PropertyOptions)
+                {
+                    stringBuilder.Append(
+                        MakeStringForOption(
+                            option: property.GetCustomAttribute<PropertyOptionAttribute>(),
+                            parameterTypes: new[] { property.PropertyType }));
                 }
 
                 return stringBuilder.ToString();
             }
         }
 
-        public OptionAttribute[] OrderedOptionAttributes
+        /*public Option[] OrderedOptionAttributes
         {
             get
             {
@@ -59,7 +64,7 @@ namespace CliOptions
 
                 return result.OrderBy(o => o.LongName).ToArray();
             }
-        }
+        }*/
 
         public ParserSettings ParserSettings { get; } = new();
 
@@ -97,11 +102,35 @@ namespace CliOptions
                 method.Invoke(this, null);
         }
 
+        private static string MakeStringForOption(Option option, Type[] parameterTypes)
+        {
+            StringBuilder parametersStringBuilder = new(" ");
+            foreach (Type type in parameterTypes)
+            {
+                parametersStringBuilder
+                    .Append('[')
+                    .Append(type.Name.ToUpper())
+                    .Append("] ");
+            }
+
+            StringBuilder stringBuilder = new();
+            stringBuilder
+                .Append("  ")
+                .Append(option.ShortName == default ? string.Empty : $"-{option.ShortName}, ")
+                .Append("--")
+                .Append(option.LongName)
+                .Append(parametersStringBuilder)
+                .Append("\t\t\t")
+                .AppendLine(option.Description);
+
+            return stringBuilder.ToString();
+        }
+
         private bool TryParseArgumentAsMethodOption(string arg, out MethodInfo methodInfo)
         {
             foreach (MethodInfo method in MethodOptions)
             {
-                var attribute = method.GetCustomAttribute<OptionAttribute>();
+                var attribute = method.GetCustomAttribute<MethodOptionAttribute>();
                 if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
                 {
                     methodInfo = method;
@@ -117,7 +146,7 @@ namespace CliOptions
         {
             foreach (PropertyInfo property in PropertyOptions)
             {
-                var attribute = property.GetCustomAttribute<OptionAttribute>();
+                var attribute = property.GetCustomAttribute<PropertyOptionAttribute>();
                 if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
                 {
                     property.SetValue(this, value);
