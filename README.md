@@ -7,6 +7,7 @@ A simple and easy to use .NET library for parsing arguments in a command-line ap
 ```csharp
 using System;
 using CliOptions;
+
 public static class Program
 {
     public static void Main(string[] args)
