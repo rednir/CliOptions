@@ -72,7 +72,7 @@ namespace CliOptions
                     // Methods will be invoked after all arguments have been parsed.
                     methodsToInvoke.Add(method, parameters);
                 }
-                else if (i + 1 < args.Length && TryParseArgumentAsPropertyOption(ref i, args))
+                else if (TryParseArgumentAsPropertyOption(ref i, args))
                 {
                 }
                 else
@@ -124,6 +124,9 @@ namespace CliOptions
                     for (int j = 0; j < methodParameters.Length; j++)
                     {
                         i++;
+                        if (i >= args.Length)
+                            throw new MissingParametersException(args[i - 1 - j], j, methodParameters.Length);
+
                         objectsForParameters.Add(
                             Convert.ChangeType(args[i], methodParameters[j].ParameterType));
                     }
@@ -148,6 +151,9 @@ namespace CliOptions
                 {
                     // Next argument is the value to this option.
                     i++;
+                    if (i >= args.Length)
+                        throw new MissingParametersException(args[i - 1], 0, 1);
+
                     property.SetValue(this, args[i]);
                     return true;
                 }
