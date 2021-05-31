@@ -51,21 +51,6 @@ namespace CliOptions
             }
         }
 
-        /*public Option[] OrderedOptionAttributes
-        {
-            get
-            {
-                List<OptionAttribute> result = new();
-
-                foreach (MethodInfo method in MethodOptions)
-                    result.Add(method.GetCustomAttribute<OptionAttribute>());
-                foreach (PropertyInfo property in PropertyOptions)
-                    result.Add(property.GetCustomAttribute<OptionAttribute>());
-
-                return result.OrderBy(o => o.LongName).ToArray();
-            }
-        }*/
-
         public ParserSettings ParserSettings { get; } = new();
 
         private MethodInfo[] MethodOptions { get; }
