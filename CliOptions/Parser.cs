@@ -74,23 +74,21 @@ namespace CliOptions
 
         public void Parse(string[] args)
         {
-            List<MethodInfo> methodsToInvoke = new();
+            // `object[]` represents the parameters to pass into the method.
+            Dictionary<MethodInfo, object[]> methodsToInvoke = new();
 
             for (int i = 0; i < args.Length; i++)
             {
                 if (!args[i].StartsWith("-"))
                     throw new UnexpectedValueException($"Unexpected argument '{args[i]}' is not an option.");
 
-                if (TryParseArgumentAsMethodOption(args[i], out MethodInfo action))
+                if (TryParseArgumentAsMethodOption(ref i, args, out MethodInfo method, out object[] parameters))
                 {
-                    // Actions will be invoked at the end of this method.
-                    methodsToInvoke.Add(action);
+                    // Methods will be invoked after all arguments have been parsed.
+                    methodsToInvoke.Add(method, parameters);
                 }
-                else if (i + 1 < args.Length && TryParseArgumentAsPropertyOption(args[i], args[i + 1]))
+                else if (i + 1 < args.Length && TryParseArgumentAsPropertyOption(ref i, args))
                 {
-                    // Skip the next argument as we know it's the
-                    // value for the option we just parsed.
-                    i++;
                 }
                 else
                 {
@@ -98,8 +96,8 @@ namespace CliOptions
                 }
             }
 
-            foreach (MethodInfo method in methodsToInvoke)
-                method.Invoke(this, null);
+            foreach (KeyValuePair<MethodInfo, object[]> pair in methodsToInvoke)
+                pair.Key.Invoke(this, pair.Value);
         }
 
         private static string MakeStringForOption(Option option, Type[] parameterTypes)
@@ -126,30 +124,44 @@ namespace CliOptions
             return stringBuilder.ToString();
         }
 
-        private bool TryParseArgumentAsMethodOption(string arg, out MethodInfo methodInfo)
+        private bool TryParseArgumentAsMethodOption(ref int i, string[] args, out MethodInfo methodOut, out object[] parametersOut)
         {
             foreach (MethodInfo method in MethodOptions)
             {
                 var attribute = method.GetCustomAttribute<MethodOptionAttribute>();
-                if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
+                if (args[i] == "--" + attribute.LongName || args[i] == "-" + attribute.ShortName)
                 {
-                    methodInfo = method;
+                    ParameterInfo[] methodParameters = method.GetParameters();
+                    List<object> objectsForParameters = new();
+                    for (int j = i; j < methodParameters.Length; j++)
+                    {
+                        // Cast the arguments specified in `string[] args` so
+                        // it can be passed into the method when invoking it.
+                        i++;
+                        objectsForParameters.Add(args[i]); // todo cast
+                    }
+
+                    methodOut = method;
+                    parametersOut = objectsForParameters.ToArray();
                     return true;
                 }
             }
 
-            methodInfo = default;
+            methodOut = null;
+            parametersOut = Array.Empty<ParameterInfo>();
             return false;
         }
 
-        private bool TryParseArgumentAsPropertyOption(string arg, string value)
+        private bool TryParseArgumentAsPropertyOption(ref int i, string[] args)
         {
             foreach (PropertyInfo property in PropertyOptions)
             {
                 var attribute = property.GetCustomAttribute<PropertyOptionAttribute>();
-                if (arg == "--" + attribute.LongName || arg == "-" + attribute.ShortName)
+                if (args[i] == "--" + attribute.LongName || args[i] == "-" + attribute.ShortName)
                 {
-                    property.SetValue(this, value);
+                    // Next argument is the value to this option.
+                    i++;
+                    property.SetValue(this, args[i]);
                     return true;
                 }
             }
