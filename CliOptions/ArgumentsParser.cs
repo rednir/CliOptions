@@ -7,9 +7,9 @@ using CliOptions.Exceptions;
 
 namespace CliOptions
 {
-    public class Parser
+    public abstract class ArgumentsParser
     {
-        public Parser(ParserSettings parserSettings = null)
+        protected ArgumentsParser(ArgumentsParserSettings parserSettings = null)
         {
             if (parserSettings != null)
                 ParserSettings = parserSettings;
@@ -51,7 +51,7 @@ namespace CliOptions
             }
         }
 
-        public ParserSettings ParserSettings { get; } = new();
+        public ArgumentsParserSettings ParserSettings { get; } = new();
 
         private MethodInfo[] MethodOptions { get; }
 

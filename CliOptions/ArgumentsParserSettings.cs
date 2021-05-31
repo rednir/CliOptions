@@ -2,7 +2,7 @@ using System;
 
 namespace CliOptions
 {
-    public class ParserSettings
+    public class ArgumentsParserSettings
     {
     }
 }

@@ -19,7 +19,7 @@ public static class Program
     }
 }
 
-public class MyOptions : Parser
+public class MyOptions : ArgumentsParser
 {
     [PropertyOption("verbose", 'v', "Sets whether to be verbose.")]
     public bool IsVerboseOn { get; set; } = false;
