@@ -118,12 +118,14 @@ namespace CliOptions
                 {
                     ParameterInfo[] methodParameters = method.GetParameters();
                     List<object> objectsForParameters = new();
-                    for (int j = i; j < methodParameters.Length; j++)
+
+                    // Cast the arguments specified in `string[] args` so
+                    // it can be passed into the method when invoking it.
+                    for (int j = 0; j < methodParameters.Length; j++)
                     {
-                        // Cast the arguments specified in `string[] args` so
-                        // it can be passed into the method when invoking it.
                         i++;
-                        objectsForParameters.Add(args[i]); // todo cast
+                        objectsForParameters.Add(
+                            Convert.ChangeType(args[i], methodParameters[j].ParameterType));
                     }
 
                     methodOut = method;
