@@ -154,7 +154,7 @@ namespace CliOptions
                     if (i >= args.Length)
                         throw new MissingParametersException(args[i - 1], 0, 1);
 
-                    property.SetValue(this, args[i]);
+                    property.SetValue(this, Convert.ChangeType(args[i], property.PropertyType));
                     return true;
                 }
             }
