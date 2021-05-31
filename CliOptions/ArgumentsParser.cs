@@ -7,6 +7,7 @@ using CliOptions.Exceptions;
 
 namespace CliOptions
 {
+    /// <summary>Base class containing methods for parsing command-line arguments.</summary>
     public abstract class ArgumentsParser
     {
         protected ArgumentsParser(ArgumentsParserSettings parserSettings = null)
@@ -25,6 +26,7 @@ namespace CliOptions
                 .ToArray();
         }
 
+        /// <summary>Gets a formatted string representing the available options declared in this class.</summary>
         public string HelpText
         {
             get
@@ -77,7 +79,7 @@ namespace CliOptions
                 }
                 else
                 {
-                    throw new UnknownArgumentException(args[i]);
+                    throw new UnknownOptionException(args[i]);
                 }
             }
 
