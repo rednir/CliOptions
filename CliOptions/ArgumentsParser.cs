@@ -98,17 +98,11 @@ namespace CliOptions
                     .Append("] ");
             }
 
-            StringBuilder stringBuilder = new();
-            stringBuilder
-                .Append("  ")
-                .Append(option.ShortName == default ? string.Empty : $"-{option.ShortName}, ")
-                .Append("--")
-                .Append(option.LongName)
-                .Append(parametersStringBuilder)
-                .Append("\t\t\t")
-                .AppendLine(option.Description);
-
-            return stringBuilder.ToString();
+            return string.Format("  {0}--{1}{2}\t\t\t{3}\n",
+                option.ShortName == default ? string.Empty : $"-{option.ShortName}, ",
+                option.LongName,
+                parametersStringBuilder,
+                option.Description);
         }
 
         private bool TryParseArgumentAsMethodOption(ref int i, string[] args, out MethodInfo methodOut, out object[] parametersOut)
