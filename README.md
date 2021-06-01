@@ -2,6 +2,10 @@
 
 A simple and easy to use .NET library for parsing arguments in a command-line application.
 
+## Usage
+
+Download from NuGet: `dotnet add package CliOptions`
+
 ### Code example:
 
 ```csharp
@@ -10,16 +14,16 @@ using CliOptions;
 
 public static class Program
 {
+    private Options _options = new();
+
     public static void Main(string[] args)
     {
-        var myOptions = new MyOptions();
-        myOptions.Parse(args);
-
+        _options.Parse(args);
         Console.WriteLine("Verbose mode is set to: " + myOptions.IsVerboseOn);
     }
 }
 
-public class MyOptions : ArgumentsParser
+public class Options : ArgumentsParser
 {
     [PropertyOption("verbose", 'v', "Sets whether to be verbose.")]
     public bool IsVerboseOn { get; set; } = false;
