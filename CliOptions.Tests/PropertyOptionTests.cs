@@ -7,51 +7,74 @@ namespace CliOptions.Tests
 {
     public class PropertyOptionTests
     {
+        private class BuiltInTypesParser : ArgumentsParser
+        {
+            [PropertyOption("bool")]
+            public bool ShouldBeTrue { get; set; }
+
+            [PropertyOption("string")]
+            public string ShouldBeHello { get; set; }
+
+            [PropertyOption("int")]
+            public int ShouldBeFiveThousand { get; set; }
+        }
+
         [Fact]
-        public void BuiltInTypesTest()
+        public void BooleanArgumentTest()
         {
             string[] args = new[]
             {
                 "--bool", "truE",
-                "--string", "Hello",
-                "--int", "5000",
-                "--dynamic", "Bye",
             };
 
             BuiltInTypesParser parser = new();
             parser.Parse(args);
-
             Assert.True(parser.ShouldBeTrue);
-            Assert.Equal("Hello", parser.ShouldBeHello);
-            Assert.Equal(5000, parser.ShouldBeFiveThousand);
-            Assert.Equal("Bye", parser.ShouldBeBye);
         }
 
         [Fact]
-        public void MissingParametersTest()
+        public void StringArgumentTest()
         {
             string[] args = new[]
             {
-                "--bool",
+                "--string", "Hello",
             };
 
             BuiltInTypesParser parser = new();
+            parser.Parse(args);
+            Assert.Equal("Hello", parser.ShouldBeHello);
+        }
+
+        [Fact]
+        public void IntArgumentTest()
+        {
+            string[] args = new[]
+            {
+                "--int", "5000",
+            };
+
+            BuiltInTypesParser parser = new();
+            parser.Parse(args);
+            Assert.Equal(5000, parser.ShouldBeFiveThousand);
+        }
+
+        [Theory]
+        [InlineData("--string")]
+        [InlineData("--int")]
+        [InlineData("--bool")]
+        public void MissingParametersTest(params string[] args)
+        {
+            BuiltInTypesParser parser = new();
             Assert.Throws<MissingParametersException>(() => parser.Parse(args));
         }
-    }
 
-    public class BuiltInTypesParser : ArgumentsParser
-    {
-        [PropertyOption("bool")]
-        public bool ShouldBeTrue { get; set; }
-
-        [PropertyOption("string")]
-        public string ShouldBeHello { get; set; }
-
-        [PropertyOption("int")]
-        public int ShouldBeFiveThousand { get; set; }
-
-        [PropertyOption("dynamic")]
-        public dynamic ShouldBeBye { get; set; }
+        [Theory]
+        [InlineData("--a")]
+        [InlineData("-B")]
+        public void UnknownOptionTest(params string[] args)
+        {
+            BuiltInTypesParser parser = new();
+            Assert.Throws<UnknownOptionException>(() => parser.Parse(args));
+        }
     }
 }
